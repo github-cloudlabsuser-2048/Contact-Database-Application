@@ -6,53 +6,46 @@
       "type": "string",
       "metadata": {
         "description": "The name of the web app that you wish to create."
-      },
-      "defaultValue": "[parameters('webAppName').value]"
+      }
     },
     "appServicePlanName": {
       "type": "string",
       "metadata": {
-        "description": "The name of the app service plan."
-      },
-      "defaultValue": "[parameters('appServicePlanName').value]"
+        "description": "The name of the App Service Plan that you wish to create."
+      }
     },
     "appServicePlanSku": {
       "type": "string",
+      "defaultValue": "F1",
       "metadata": {
-        "description": "The SKU of the app service plan."
-      },
-      "defaultValue": "[parameters('appServicePlanSku').value]"
+        "description": "The pricing tier of the App Service Plan."
+      }
     }
   },
   "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2018-02-01",
+      "name": "[parameters('appServicePlanName')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "[parameters('appServicePlanSku')]"
+      }
+    },
     {
       "type": "Microsoft.Web/sites",
       "apiVersion": "2018-11-01",
       "name": "[parameters('webAppName')]",
       "location": "[resourceGroup().location]",
-      "kind": "app",
-      "properties": {
-        "siteConfig": {
-          "appSettings": [
-            {
-              "name": "key1",
-              "value": "value1"
-            },
-            {
-              "name": "key2",
-              "value": "value2"
-            }
-          ],
-          "netFrameworkVersion": "v4.8",
-          "use32BitWorkerProcess": true
-        }
-      },
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
       ],
-      "sku": {
-        "name": "[parameters('appServicePlanSku')]",
-        "tier": "[parameters('appServicePlanSku')]"
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+        "siteConfig": {
+          "netFrameworkVersion": "v4.8",
+          "alwaysOn": true
+        }
       }
     }
   ]
