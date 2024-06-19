@@ -1,52 +1,55 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": {
-    "webAppName": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of the web app that you wish to create."
-      }
-    },
-    "appServicePlanName": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of the App Service Plan that you wish to create."
-      }
-    },
-    "appServicePlanSku": {
-      "type": "string",
-      "defaultValue": "F1",
-      "metadata": {
-        "description": "The pricing tier of the App Service Plan."
-      }
-    }
-  },
-  "resources": [
-    {
-      "type": "Microsoft.Web/serverfarms",
-      "apiVersion": "2018-02-01",
-      "name": "[parameters('appServicePlanName')]",
-      "location": "[resourceGroup().location]",
-      "sku": {
-        "name": "[parameters('appServicePlanSku')]"
-      }
-    },
-    {
-      "type": "Microsoft.Web/sites",
-      "apiVersion": "2018-11-01",
-      "name": "[parameters('webAppName')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
-      ],
-      "properties": {
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
-        "siteConfig": {
-          "netFrameworkVersion": "v4.8",
-          "alwaysOn": true
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storageAccountNamePrefix": {
+            "maxLength": 11,
+            "type": "String",
+            "metadata": {
+                "description": "Storage prefix must be maximum of 11 characters with only lowercase letters or numbers."
+            }
+        },
+        "storageAccountType": {
+            "type": "String"
+        },
+        "location": {
+            "defaultValue": "[resourceGroup().location]",
+            "type": "String"
         }
-      }
+    },
+    "variables": {
+        "storageAccountName": "[concat(parameters('storageAccountNamePrefix'), uniqueString(resourceGroup().id))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "name": "pid-d78a52f6-84b0-4b3d-8e9f-17648dfd7615-partnercenter",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "resources": []
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2021-09-01",
+            "name": "[variables('storageAccountName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "[parameters('storageAccountType')]"
+            },
+            "kind": "StorageV2",
+            "properties": {}
+        }
+    ],
+    "outputs": {
+        "storageEndpoint": {
+            "type": "String",
+            "value": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2021-09-01').primaryEndpoints.blob]"
+        }
     }
-  ]
 }
